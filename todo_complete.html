@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+      crossorigin="anonymous"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
+      rel="stylesheet"
+    />
+    <style>
+      h5 {
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container-sm" id="nav">
+      <ul class="nav nav-underline justify-content-center">
+        <li class="nav-item">
+          <a
+            class="menu-item nav-link active"
+            aria-current="page"
+            href="index.html"
+          >
+            <span class="material-symbols-outlined"> home </span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a
+            class="menu-item nav-link"
+            aria-current="page"
+            href="todo_edit.html"
+          >
+            <span class="material-symbols-outlined"> edit </span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a
+            class="menu-item nav-link"
+            aria-current="page"
+            href="todo_complete.html"
+          >
+            <span class="material-symbols-outlined"> task_alt </span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a
+            class="menu-item nav-link"
+            aria-current="page"
+            href="todo_canleander.html"
+          >
+            <span class="material-symbols-outlined"> event </span>
+          </a>
+        </li>
+      </ul>
+    </div>
+    <div class="d-flex justify-content-center"><h5>완료된 할 일</h5></div>
+    <div class="border-top">
+      <div class="container my-4" id="todo-list"></div>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const todoList = document.getElementById("todo-list");
+
+        // 로컬스토리지에서 할 일 데이터 가져오기
+        const todos = JSON.parse(localStorage.getItem("todos")) || [];
+
+        // 날짜별로 그룹화된 데이터 생성 (표시용 날짜만 추출)
+        const groupedTodos = todos
+          .filter((todo) => todo.stated) // stated가 true인 것만
+          .reduce((groups, todo) => {
+            const displayDate = todo.saveTime.split(" ")[0]; // YYYY-MM-DD 형식의 날짜만 추출
+            if (!groups[displayDate]) groups[displayDate] = [];
+            groups[displayDate].push(todo);
+            return groups;
+          }, {});
+
+        // UI에 그룹화된 할 일 표시
+        Object.keys(groupedTodos).forEach((displayDate) => {
+          const dateCard = document.createElement("div");
+          dateCard.classList.add("card", "mb-3");
+          dateCard.innerHTML = `<div class="card-header">${displayDate}</div>`;
+          const cardBody = document.createElement("div");
+          cardBody.classList.add("card-body");
+
+          groupedTodos[displayDate].forEach((todo, index) => {
+            const todoRow = document.createElement("div");
+            todoRow.classList.add("row", "mb-2");
+            todoRow.setAttribute("data-id", todo.id);
+
+            // 중요도에 따른 색상 클래스 추가
+            let importanceClass = "";
+            switch (todo.importance) {
+              case "1":
+                importanceClass = "text-danger";
+                break;
+              case "2":
+                importanceClass = "text-warning";
+                break;
+              case "3":
+                importanceClass = "text-primary";
+                break;
+              case "4":
+                importanceClass = "text-success";
+                break;
+            }
+
+            todoRow.innerHTML = `
+                      <div class="col">
+                          <input
+                              class="form-check-input"
+                              type="checkbox"
+                              id="checkbox_${todo.id}_${index}"
+                          />
+                      </div>
+                      <div class="col context-text ${importanceClass}" id="context_${
+              todo.id
+            }_${index}">
+                          ${todo.todo || "할 일 없음"}
+                      </div>
+                      <div class="col">
+                          <button
+                              type="button"
+                              class="btn btn-outline-danger"
+                              id="success_${todo.id}_${index}"
+                          >
+                              완료 취소
+                          </button>
+                      </div>
+                  `;
+
+            // 버튼 클릭 시 해당 할 일의 stated 값을 false로 업데이트하고 UI에서 제거
+            const cancelButton = todoRow.querySelector(
+              `#success_${todo.id}_${index}`
+            );
+            cancelButton.addEventListener("click", function () {
+              updateTodoStatus(todo.saveTime); // 고유한 saveTime을 사용하여 업데이트
+              todoRow.remove(); // UI에서 제거
+            });
+
+            cardBody.appendChild(todoRow);
+          });
+
+          dateCard.appendChild(cardBody);
+          todoList.appendChild(dateCard);
+        });
+
+        // 특정 할 일의 stated 값을 false로 업데이트하고 로컬스토리지 저장
+        function updateTodoStatus(saveTime) {
+          const todos = JSON.parse(localStorage.getItem("todos")) || [];
+          const updatedTodos = todos.map((todo) => {
+            if (todo.saveTime === saveTime) {
+              // saveTime이 일치하는 항목만 변경
+              todo.stated = false;
+            }
+            return todo;
+          });
+          localStorage.setItem("todos", JSON.stringify(updatedTodos));
+        }
+      });
+    </script>
+  </body>
+</html>

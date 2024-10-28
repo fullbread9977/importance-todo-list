@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>할 일 추가</title>
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+    integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+    crossorigin="anonymous"
+  />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
+    rel="stylesheet"
+  />
+</head>
+<body>
+  <div class="container-sm" id="nav">
+    <ul class="nav nav-underline justify-content-center">
+      <li class="nav-item">
+        <a class="menu-item nav-link active" aria-current="page" href="index.html">
+          <span class="material-symbols-outlined"> home </span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="menu-item nav-link" aria-current="page" href="todo_edit.html">
+          <span class="material-symbols-outlined"> edit </span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a
+          class="menu-item nav-link"
+          aria-current="page"
+          href="todo_complete.html"
+        >
+          <span class="material-symbols-outlined"> task_alt </span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a
+          class="menu-item nav-link"
+          aria-current="page"
+          href="todo_canleander.html"
+        >
+          <span class="material-symbols-outlined"> event </span>
+        </a>
+      </li>
+    </ul>
+  </div>
+  <div class="container-lg">
+    <form method="post"  target="_self" onsubmit="onTodoSubmit(event)" id="todo">
+      <!--https://wooncloud.tistory.com/26-->
+      <div class="container text-center">
+        <div class="row">
+          <div class="col">
+            <div class="mb-3">
+              <label for="exampleFormControlTextarea1" class="form-label"
+                >할 일</label>
+              <textarea
+                class="form-control"
+                name="todo_context"
+                rows="3"
+                placeholder="할 일을 입력하세요"
+                required
+                
+              ></textarea>
+            </div>
+          </div>
+        </div>
+        <!-- 1번째 -->
+        <div class="row">
+          <div class="col">
+            <div class="mb-3">
+              <label class="form-label"
+              >중요도</label
+            >
+            <select
+              class="form-select"
+              name="importance"
+              aria-label="importance select"
+              
+            >
+              <option value="1">매우중요</option>
+              <option value="2">중요</option>
+              <option value="3" selected>보통</option>
+              <option value="4">낮음</option>
+            </select>
+            <div>
+          </div>
+        </div>
+        <!--2번째-->
+        <div class="row">
+            <div class="col">
+              <label class="form-label" id="endLable">종료시간</label>
+              <input type="time" class="form-control" name="end_time" id="end_time"/>
+            </div>
+          </div>
+          <!-- 4 번째 --> 
+          <div class="row">
+            <div class="mb-3">
+              
+          </div>
+        </div>
+      </div>
+      <!--
+      <input type="date" name="startDate" id="startDate" />
+      <input type="date" name="endDate" id="endDate" />
+      -->
+      <div class="row mt-0">  
+          <input type="submit" class="btn btn-primary" value="할 일 추가" onsubmit="onTodoSubmit(event)" target="_self">
+      </div>
+      <div class="row mt-1">
+          <input type="button" class="btn btn-primary" value="취소" onclick="onCancle(event)" target="_self">
+      </div>
+      <div class="row mt-1">
+        <input type="button" class="btn btn-danger" id="deleteBtn" value="삭제" onclick="onDelete()" target="_self" style="display: none;">
+    </div>
+  
+    </form>
+  </div>
+  <script>
+
+ let selectedTodo = JSON.parse(sessionStorage.getItem("selectedTodo")) || null;
+
+document.addEventListener("DOMContentLoaded", function () {
+    var todoForm = document.forms.todo;
+    var deleteBtn = document.getElementById("deleteBtn");
+    
+    if (selectedTodo) {
+        // 수정할 기존 데이터가 있을 때
+        todoForm.todo_context.value = selectedTodo.todo;
+        todoForm.importance.value = selectedTodo.importance;
+        todoForm.end_time.value = selectedTodo.endTime;
+        deleteBtn.style.display = "inline-block";
+    } else {
+        // 새로운 할 일 추가 시
+        todoForm.todo_context.value = "";
+        todoForm.importance.value = "3";
+        todoForm.end_time.value = SetTime();
+        deleteBtn.style.display = "none";
+    }
+
+    
+});
+
+function onCancle(event){
+  sessionStorage.removeItem("selectedTodo");
+
+  var todoForm = document.forms.todo;
+  
+  todoForm.todo_context.value = "";
+  todoForm.importance.value = "3";
+  todoForm.end_time.value = SetTime();
+  
+  window.location.href = "index.html";
+}
+
+function onDelete(event){
+    // localStorage에서 해당 할 일 삭제
+    if (selectedTodo) {
+        let todos = JSON.parse(localStorage.getItem("todos")) || [];
+        todos = todos.filter(item => item.saveTime !== selectedTodo.saveTime);
+        localStorage.setItem("todos", JSON.stringify(todos));
+
+        // 알림 및 세션 초기화 후 페이지 이동
+        alert("할 일이 삭제되었습니다!");
+        sessionStorage.removeItem("selectedTodo");
+        window.location.href = "index.html";
+    }
+
+}
+
+
+function onTodoSubmit(event) {
+    event.preventDefault();
+
+    // 폼 데이터 가져오기
+    const todoForm = document.forms.todo;
+    const context = todoForm.todo_context.value.trim();
+    const importance = todoForm.importance.value;
+    const endTime = todoForm.end_time.value;
+    const saveTime = selectedTodo ? selectedTodo.saveTime : `${SetDate()} ${SetTime()}`;
+
+    // localStorage에서 할 일 데이터 불러오기
+    let todos = JSON.parse(localStorage.getItem("todos")) || [];
+
+    if (selectedTodo) {
+        // 기존 할 일을 수정하는 경우
+        todos = todos.map(item => {
+            if (item.saveTime === selectedTodo.saveTime && item.todo === selectedTodo.todo) {
+                return { ...item, todo: context, importance, endTime };
+            }
+            return item;
+        });
+    } else {
+        // 새로운 할 일 추가
+        todos.push({
+            'importance': importance,
+            'todo': context,
+            'endTime': endTime,
+            'saveTime': saveTime,
+            'stated': false
+        });
+    }
+
+    // 업데이트된 할 일 목록 저장
+    localStorage.setItem("todos", JSON.stringify(todos));
+
+    // 알림 및 세션 초기화 후 페이지 이동
+    alert("할 일이 저장되었습니다!");
+    sessionStorage.removeItem("selectedTodo"); 
+    window.location.href = "index.html";
+}
+
+    //날짜 설정
+    var today = new Date();
+    
+    function SetDate(){
+      var year = today.getFullYear();
+      var month = today.getMonth()+1;
+      var date = today.getDate();
+
+      month = setLength(month); 
+      
+      var setDate = year+"-"+month+"-"+date;
+ 
+      return setDate;
+    }
+    
+
+    //시간설정
+    function SetTime(){
+   
+    var hour = today.getHours();
+    var minues = today.getMinutes();
+    var seconds = today.getSeconds();
+
+    hour = setLength(hour);
+    minues = setLength(minues);
+    seconds = setLength(seconds);
+
+    var setTime = hour+":"+minues+":"+seconds;
+    return setTime;
+    }
+    
+    function setLength(i){
+      if(i.toString().length == 1 ){
+        return ''.concat("0",i.toString());
+      }else{
+        return i;
+      }
+    }
+    
+
+    document.addEventListener("DOMContentLoaded",function(){
+      
+      var endTimeEle = document.getElementById("end_time");
+      var time_Set = SetTime();
+
+      endTimeEle.value = time_Set;
+      endTimeEle.setAttribute("min",time_Set);
+    
+      
+    })
+
+  
+  </script>
+</body>
+</html>
